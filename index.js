@@ -22,4 +22,4 @@ bot.on("disconnecting" , ()=>{
     console.log("disconnect");
 })
 
-bot.login(process.env.TOKEN); 
+bot.login(process.env.TOKEN || 3000); 
