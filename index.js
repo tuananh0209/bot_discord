@@ -14,4 +14,4 @@ bot.on('ready' , () => {
 
 bot.on("message",  play.play);
 
-bot.login(process.env.TOKEN || 3000); 
+bot.login(process.env.TOKEN); 
