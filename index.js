@@ -14,12 +14,4 @@ bot.on('ready' , () => {
 
 bot.on("message",  play.play);
 
-bot.on("reconnecting", () => {
-    console.log("reconnect");
-})
-
-bot.on("disconnecting" , ()=>{
-    console.log("disconnect");
-})
-
 bot.login(process.env.TOKEN || 3000); 
