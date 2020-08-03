@@ -54,14 +54,13 @@ async function play(connection , msg , begin ) {
         dispatch = connection.play(await ytdl(url, { format: "audioonly" }), {
             seek: begin,
             fec: true,
-            bitrate : 128,
+            bitrate : "auto",
         });
         // console.log(dispatch.streamOptions);
         // console.log(playList);
-        dispatch.setBitrate("auto");
         // console.log(playList);
         dispatch.setVolume(volume /100);
-        dispatch.setFEC("true");
+        
 
         dispatch.on('finish' , () => {  
             if (playList.length <= 1)
@@ -80,8 +79,8 @@ async function play(connection , msg , begin ) {
             }
         })
 
-        dispatch.on("error", (err) =>{
-            console.log(err);
+        dispatch.on("error", () =>{
+            console.log("err");
         })
 
         dispatch.on("volumeChange" ,() => {
@@ -237,7 +236,7 @@ module.exports.textToSpeech = async msg => {
         var dis =  await connection.play("output1.mp3");
 
         dis.on( "finish" , () => {play(connection , msg , timeStream)});
-    } catch {
+    } catch(err) {
         var dis = await connection.play("output1.mp3" , {
             volume : "1.5",
         });
