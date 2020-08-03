@@ -12,11 +12,14 @@
   "license": "ISC",
   "dependencies": {
     "@discordjs/opus": "^0.3.2",
+    "@google-cloud/text-to-speech": "^3.1.0",
     "discord.js": "^12.2.0",
     "dotenv": "^8.2.0",
     "ffmpeg-static": "^4.2.6",
     "fs": "0.0.1-security",
+    "util": "^0.12.3",
     "yt-search": "^2.1.8",
+    "ytdl-core": "^3.2.0",
     "ytdl-core-discord": "^1.2.1"
   },
   "devDependencies": {
