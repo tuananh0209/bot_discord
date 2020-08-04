@@ -73,7 +73,6 @@ async function play(connection , msg , begin ) {
                 playList.shift();
                 // msg.channel.send(playList[0].title);
                 // console.log(dispatch.totalStreamTime / 1000);
-
                 play(connection , msg ,0 );
                 
             }
@@ -167,6 +166,7 @@ module.exports.play = async msg => {
         } else {
             msg.channel.send("ngu!");
         }
+        connection.disconnect();
     } else if (key == "\\remove"){
         try {
             console.log(order);
@@ -233,7 +233,9 @@ module.exports.textToSpeech = async msg => {
         var timeStream = dispatch.totalStreamTime / 1000 + dispatch.streamOptions.seek;
         // let connection = await msg.member.voice.channel.join();
         // dispatch.pause(true);
-        var dis =  await connection.play("output1.mp3");
+        var dis =  await connection.play("output1.mp3",{
+            volume: "1.5",
+        });
 
         dis.on( "finish" , () => {play(connection , msg , timeStream)});
     } catch(err) {
