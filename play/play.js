@@ -130,7 +130,9 @@ module.exports.play = async msg => {
             msg.channel.send("No queue! ngu vc");
         } else if (playList.length == 1){
             playList.pop();
-            dispatch.pause(true);
+            dispatch.pause(false);
+            dispatch = undefined;
+
         } else {
             dispatch.pause(true);
             console.log(10);
@@ -141,13 +143,14 @@ module.exports.play = async msg => {
 
         if (dispatch)
             dispatch.pause(true);
+    
         else msg.channel.send("ngu vc");
 
     } else if (msg.content == "\\resume"){
 
         if (dispatch) 
             dispatch.resume();
-        else msg.dispatch.send("ngu");
+        else msg.channel.send("Hong resume được âu :'( ");
 
     } else if (msg.content == "\\playlist"){
         var i = 0;
