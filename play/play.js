@@ -130,7 +130,7 @@ module.exports.play = async msg => {
             msg.channel.send("No queue! ngu vc");
         } else if (playList.length == 1){
             playList.pop();
-            
+            dispatch.pause(true);
         } else {
             dispatch.pause(true);
             console.log(10);
