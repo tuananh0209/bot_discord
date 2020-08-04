@@ -20,8 +20,9 @@ const client = new textToSpeech.TextToSpeechClient({
 const setting = {
     "audioConfig": {
         "audioEncoding": "LINEAR16",
-        "pitch": 0,
-        "speakingRate": 1.00
+        "pitch": 00,
+        "speakingRate": 0.75,
+        "sampleRateHertz": 16000
     },
     "input": {
         "text": ""
@@ -158,15 +159,18 @@ module.exports.play = async msg => {
                 i++;
             })
     } else if (msg.content == "\\stop"){
+        // console.log("Asdfd");
+
         if (dispatch){
             dispatch.pause();
-            while(playList){
+            while(playList.length){
                 playList.pop();
             }
         } else {
             msg.channel.send("ngu!");
         }
-        connection.disconnect();
+        // connection.disconnect();
+
     } else if (key == "\\remove"){
         try {
             console.log(order);
@@ -233,14 +237,14 @@ module.exports.textToSpeech = async msg => {
         var timeStream = dispatch.totalStreamTime / 1000 + dispatch.streamOptions.seek;
         // let connection = await msg.member.voice.channel.join();
         // dispatch.pause(true);
-        var dis =  await connection.play("output1.mp3",{
-            volume: "1.5",
-        });
+        var dis =  await connection.play("output1.mp3");
+        dis.setVolume(2);
+
 
         dis.on( "finish" , () => {play(connection , msg , timeStream)});
     } catch(err) {
-        var dis = await connection.play("output1.mp3" , {
-            volume : "1.5",
-        });
+        var dis = await connection.play("output1.mp3");
+        dis.setVolume(2);
+        
     }  
 }
