@@ -82,6 +82,9 @@ async function play(connection , msg , begin ) {
 
         dispatch.on("error", () =>{
             console.log("err");
+            connection = msg.member.voice.channel.join();
+            dispatch = [];
+            play(connection, msg, 0);
         })
 
         dispatch.on("volumeChange" ,() => {
@@ -90,9 +93,15 @@ async function play(connection , msg , begin ) {
         })
 };
 
-function autoDisconnect(connection){
+function autoDisconnect(con){
     setInterval(function(){
-        connection.disconnect();
+        con.disconnect();
+        connection = undefined;
+        dispatch = undefined;
+        volume = 50;
+        while (playList.length) {
+            playList.pop();
+        }
     }, 1000*60*60);
 }
 
@@ -115,7 +124,7 @@ module.exports.play = async msg => {
     var urlCheck = order.indexOf("http");
     // console.log(msg.embeds[0].video);
     if (key == "\\q"){
-        if (!connection) connection = await msg.member.voice.channel.join();
+        if (msg.member.voice.channel) connection = await msg.member.voice.channel.join();
         
         var keyWord = urlCheck == -1 ? order : msg.embeds[0].title;
         var a = await yts(keyWord);
@@ -221,6 +230,13 @@ module.exports.play = async msg => {
         try{
             msg.reply('Bye!!!');
             connection.disconnect();
+            
+            connection = undefined;
+            dispatch = undefined;
+            volume = 50;
+            while (playList.length) {
+                playList.pop();
+            }
         }
         catch(err){
             msg.channel.send("Can't disconnect!");
