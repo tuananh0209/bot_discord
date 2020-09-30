@@ -5,6 +5,7 @@ const fs = require("fs");
 require("dotenv").config();
 var util = require("util");
 const discord = require("discord.js");
+const { DH_NOT_SUITABLE_GENERATOR } = require("constants");
 
 const keyFile = 'textToSpeech/authClientAPIGoogle.json';
 const projectId = process.env.PROJECTID;
@@ -43,7 +44,7 @@ var connection;
 var volume = 50;
 
 async function play(connection , msg , begin ) {
-    
+        autoDisconnect(connection);
         var url = playList[0].url;
 
         // dispatch = connection.play(await ytdl(url) ,{
@@ -89,9 +90,15 @@ async function play(connection , msg , begin ) {
         })
 };
 
+function autoDisconnect(connection){
+    setInterval(function(){
+        connection.disconnect();
+    }, 1000*60*60);
+}
+
 module.exports.play = async msg => {
     
-    if (msg.author.bot || ! msg.content.startsWith("\\")) return;
+    if (msg.author.bot || !msg.guild || !msg.content.startsWith("\\")) return;
 
 
     var i = msg.content.indexOf(' ');
@@ -109,7 +116,7 @@ module.exports.play = async msg => {
     // console.log(msg.embeds[0].video);
     if (key == "\\q"){
         if (!connection) connection = await msg.member.voice.channel.join();
-    
+        
         var keyWord = urlCheck == -1 ? order : msg.embeds[0].title;
         var a = await yts(keyWord);
         var data = a.videos[0]; 
@@ -126,12 +133,12 @@ module.exports.play = async msg => {
     } else if (msg.content == "\\next"){
         console.log(122);
 
-        if (!dispatch) {
+        if (dispatch == null || dispatch =="" || dispatch == undefined) {
             msg.channel.send("No queue! ngu vc");
         } else if (playList.length == 1){
             playList.pop();
             dispatch.pause(false);
-            dispatch = undefined;
+            dispatch = [];
 
         } else {
             dispatch.pause(true);
@@ -141,20 +148,25 @@ module.exports.play = async msg => {
         }
     } else if (msg.content == "\\pause"){
 
-        if (dispatch)
+        try {
             dispatch.pause(true);
+        } catch (error) {
+            msg.channel.send("ngu vc");
+        }
     
-        else msg.channel.send("ngu vc");
 
     } else if (msg.content == "\\resume"){
-
-        if (dispatch) 
+ 
+        try {
             dispatch.resume();
-        else msg.channel.send("Hong resume được âu :'( ");
+        }
+        catch(err) {
+            msg.channel.send("Hong resume được âu :'( ");
+        } 
 
     } else if (msg.content == "\\playlist"){
         var i = 0;
-        if (!playList){
+        if ( playList.length <= 0){
             msg.channel.send("đéo có :(");
         } else
             playList.map(function(value){
@@ -164,12 +176,13 @@ module.exports.play = async msg => {
     } else if (msg.content == "\\stop"){
         // console.log("Asdfd");
 
-        if (dispatch){
+        try{
             dispatch.pause();
+            dispatch = [];
             while(playList.length){
                 playList.pop();
             }
-        } else {
+        } catch(err) {
             msg.channel.send("ngu!");
         }
         // connection.disconnect();
@@ -193,7 +206,7 @@ module.exports.play = async msg => {
             msg.channel.send(value);
         })
     } else if (key == "\\volume"){
-        if (!dispatch) {
+        if (dispatch == "" || dispatch == undefined) {
             msg.reply("No audio");
             return;
         }
@@ -204,11 +217,22 @@ module.exports.play = async msg => {
         volume = parseInt(order);
         dispatch.setVolume(volume / 100);
         msg.channel.send("Okay !");
-    }
-}
+    } else if (msg.content == "\\disconnect"){
+        try{
+            msg.reply('Bye!!!');
+            connection.disconnect();
+        }
+        catch(err){
+            msg.channel.send("Can't disconnect!");
+        }
+       
 
+    }
+    
+}
+ 
 module.exports.textToSpeech = async msg => {
-    if (msg.author.bot) return;
+    if (msg.author.bot) return; 
     var i = msg.content.indexOf(' ');
     // console.log(msg.author.bot);
 
