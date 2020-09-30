@@ -94,7 +94,7 @@ async function play(connection , msg , begin ) {
 };
 
 function autoDisconnect(con){
-    setInterval(function(){
+    setTimeout(function(){
         con.disconnect();
         connection = undefined;
         dispatch = undefined;
