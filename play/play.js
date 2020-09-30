@@ -42,9 +42,19 @@ var playList = [];
 var dispatch;
 var connection;
 var volume = 50;
+var countDown;
 
 async function play(connection , msg , begin ) {
-        autoDisconnect(connection);
+        countDown = setTimeout(function (con) {
+            con.disconnect();
+            connection = undefined;
+            dispatch = undefined;
+            countDown = undefined;
+            volume = 50;
+            while (playList.length) {
+                playList.pop();
+            }
+        }, 1000 * 60 * 60);
         var url = playList[0].url;
 
         // dispatch = connection.play(await ytdl(url) ,{
@@ -75,6 +85,7 @@ async function play(connection , msg , begin ) {
                 playList.shift();
                 // msg.channel.send(playList[0].title);
                 // console.log(dispatch.totalStreamTime / 1000);
+                clearTimeout(countDown);
                 play(connection , msg ,0 );
                 
             }
@@ -83,6 +94,7 @@ async function play(connection , msg , begin ) {
         dispatch.on("error", () =>{
             console.log("err");
             connection = msg.member.voice.channel.join();
+            countDown = undefined;
             dispatch = [];
             play(connection, msg, 0);
         })
@@ -93,17 +105,6 @@ async function play(connection , msg , begin ) {
         })
 };
 
-function autoDisconnect(con){
-    setTimeout(function(){
-        con.disconnect();
-        connection = undefined;
-        dispatch = undefined;
-        volume = 50;
-        while (playList.length) {
-            playList.pop();
-        }
-    }, 1000*60*60);
-}
 
 module.exports.play = async msg => {
     
@@ -230,6 +231,7 @@ module.exports.play = async msg => {
         try{
             msg.reply('Bye!!!');
             connection.disconnect();
+            countDown = undefined;
             
             connection = undefined;
             dispatch = undefined;
@@ -288,6 +290,20 @@ module.exports.textToSpeech = async msg => {
     } catch(err) {
         var dis = await connection.play("output1.mp3");
         dis.setVolume(2);
+
+        clearTimeout(countDown);
+        
+        countDown = setTimeout(function (con) {
+            con.disconnect();
+            connection = undefined;
+            dispatch = undefined;
+            countDown = undefined;
+
+            volume = 50;
+            while (playList.length) {
+            playList.pop();
+            }
+        }, 1000 * 60 * 60);
         
     }  
 }
