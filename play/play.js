@@ -70,11 +70,23 @@ async function play(connection , msg , begin ) {
         //     type: 'opus'
         // });
         // console.log(begin);
-        dispatch = connection.play(await ytdl(url, { format: "audioonly" }), {
-            seek: begin,
-            fec: true,
-            bitrate : "auto",
-        });
+        try{
+            dispatch = connection.play(await ytdl(url, { format: "audioonly" }), {
+                seek: begin,
+                fec: true,
+                bitrate : "auto",
+            });
+        }
+        catch(err){
+            connection = msg.member.voice.channel.join();
+            dispatch = connection.play(await ytdl(url, {
+                format: "audioonly"
+            }), {
+                seek: begin,
+                fec: true,
+                bitrate: "auto",
+            });
+        }
         // console.log(dispatch.streamOptions);
         // console.log(playList);
         // console.log(playList);
