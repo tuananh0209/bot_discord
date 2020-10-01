@@ -93,6 +93,7 @@ async function play(connection , msg , begin ) {
 
         dispatch.on("error", () =>{
             console.log("err");
+            connection.disconnect();
             connection = msg.member.voice.channel.join();
             countDown = undefined;
             dispatch = [];
