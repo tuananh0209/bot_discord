@@ -45,8 +45,8 @@ var volume = 50;
 var countDown;
 
 async function play(connection , msg , begin ) {
-        countDown = setTimeout(function (con) {
-            con.disconnect();
+        countDown = setTimeout(function () {
+            connection.disconnect();
             connection = undefined;
             dispatch = undefined;
             countDown = undefined;
