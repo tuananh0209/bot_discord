@@ -55,7 +55,14 @@ async function play(connection , msg , begin ) {
                 playList.pop();
             }
         }, 1000 * 60 * 60);
-        var url = playList[0].url;
+
+        var url;
+        try {
+            url = playList[0].url;    
+        } catch (error) {
+            msg.reply("Opp!!");
+            return;
+        }    
 
         // dispatch = connection.play(await ytdl(url) ,{
         //     filter: format => format.quanlity == "360p",
