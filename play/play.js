@@ -6,12 +6,11 @@ require("dotenv").config();
 var util = require("util");
 const discord = require("discord.js");
 const { DH_NOT_SUITABLE_GENERATOR } = require("constants");
+const { repeat, indexOf } = require("ffmpeg-static");
 
 const keyFile = 'textToSpeech/authClientAPIGoogle.json';
 const projectId = process.env.PROJECTID;
 
-
-var bot = new discord.Client();
 
 const client = new textToSpeech.TextToSpeechClient({
     projectId,
@@ -43,26 +42,29 @@ var dispatch;
 var connection;
 var volume = 50;
 var countDown;
+var indexPlay = 0;
 
-async function play(connection , msg , begin ) {
+
+async function play(connection , msg , begin, index) {
+        indexPlay = index;
         countDown = setTimeout(function () {
             connection.disconnect();
             connection = undefined;
             dispatch = undefined;
             countDown = undefined;
             volume = 50;
-            while (playList.length) {
-                playList.pop();
-            }
+            playList.splice(0);
         }, 1000 * 60 * 60);
 
         var url;
         try {
-            url = playList[0].url;    
+            url = playList[index].url;
+            // console.log(url);    
         } catch (error) {
             msg.reply("Opp!!");
             return;
         }    
+        console.log(playList);
 
         // dispatch = connection.play(await ytdl(url) ,{
         //     filter: format => format.quanlity == "360p",
@@ -70,25 +72,24 @@ async function play(connection , msg , begin ) {
         //     type: 'opus'
         // });
         // console.log(begin);
-        try{
+        // try{
             dispatch = connection.play(await ytdl(url, { format: "audioonly" }), {
                 seek: begin,
                 fec: true,
                 bitrate : "auto",
             });
-        }
-        catch(err){
-            connection = msg.member.voice.channel.join();
-            dispatch = connection.play(await ytdl(url, {
-                format: "audioonly"
-            }), {
-                seek: begin,
-                fec: true,
-                bitrate: "auto",
-            });
-        }
+        // }
+        // catch(err){
+        //     var connection = msg.member.voice.channel.join();
+        //     dispatch = connection.play(await ytdl(url, {
+        //         format: "audioonly"
+        //     }), {
+        //         seek: begin,
+        //         fec: true,
+        //         bitrate: "auto",
+        //     });
+        // }
         // console.log(dispatch.streamOptions);
-        // console.log(playList);
         // console.log(playList);
         dispatch.setVolume(volume /100);
         
@@ -96,27 +97,27 @@ async function play(connection , msg , begin ) {
         dispatch.on('finish' , () => {  
             if (playList.length <= 1)
             {
-                // console.log (dispatch.totalStreamTime / 1000);
-                playList.shift();
-                
+                if (playList[index].repeat == false) playList.splice(index,1);
+                else {
+                    clearTimeout(countDown);
+                    play(connection, msg, 0, 0);
+                }
             }
             else {
-                playList.shift();
-                // msg.channel.send(playList[0].title);
-                // console.log(dispatch.totalStreamTime / 1000);
+                if (playList[index].repeat == false) playList.splice(index , 1);
                 clearTimeout(countDown);
-                play(connection , msg ,0 );
-                
+                play(connection , msg , 0 , index = index == playList.length - 1 ? 0 : index + 1);
             }
         })
 
-        dispatch.on("error", () =>{
+        dispatch.on("error", async () =>{
             console.log("err");
+            var timeStream = dispatch.totalStreamTime / 1000 + dispatch.streamOptions.seek;
             connection = undefined;
-            connection = msg.member.voice.channel.join();
+            connection = await msg.member.voice.channel.join();
             countDown = undefined;
             dispatch = [];
-            play(connection, msg, 0);
+            play(connection, msg, timeStream, index);
         })
 
         dispatch.on("volumeChange" ,() => {
@@ -139,7 +140,7 @@ module.exports.play = async msg => {
     try{
     var order = msg.content.substr(i);
     }catch(err){
-    var order = "a";
+    var order = "";
     }
 
     var urlCheck = order.indexOf("http");
@@ -152,29 +153,34 @@ module.exports.play = async msg => {
         var data = a.videos[0]; 
         // console.log(data);
         if (playList[0]){
+            data.repeat = false;
             playList.push(data);
             msg.channel.send(data.title);
   
         }else{
+            data.repeat = false;
             playList.push(data);
-            play(connection , msg , 0);
+            play(connection , msg , 0 , 0);
             msg.channel.send("play!");
         }
+        console.log(data);
+
     } else if (msg.content == "\\next"){
         console.log(122);
 
         if (dispatch == null || dispatch =="" || dispatch == undefined) {
             msg.channel.send("No queue! ngu vc");
         } else if (playList.length == 1){
-            playList.pop();
+            playList.splice(indexPlay , 1);
             dispatch.pause(false);
             dispatch = [];
 
         } else {
             dispatch.pause(true);
             console.log(10);
-            playList.shift();
-            play(connection , msg , 0);
+            playList.splice(indexPlay , 1);
+            
+            play(connection , msg , 0 , indexPlay >= playList.length ? 0 : indexPlay);
         }
     } else if (msg.content == "\\pause"){
 
@@ -230,7 +236,8 @@ module.exports.play = async msg => {
         }
     } else if (msg.content == "\\help"){
         var command = [
-            "\\remove + [pos]", "\\pause/playlist/resume/next/stop" , "\\q + [key word]" , "\\tts + text"
+            "\\remove + [pos]", "\\pause/playlist/resume/next/stop" , "\\q + [key word]" , "\\tts + text",
+            "\\repeat/+[pos]/[start/end]", "\\unrepeat/+[pos]/[start/end]","\\disconnect"
         ]
         command.map(function(value){
             msg.channel.send(value);
@@ -265,12 +272,114 @@ module.exports.play = async msg => {
         }
        
 
+    } else if (msg.content == '\\repeat' || key == '\\repeat'){
+        if (msg.content.indexOf(' ') == -1){
+            var i;
+            for (i = 0; i < playList.length ; i++){
+                playList[i].repeat = true;
+            }
+        }else {
+            try {
+                var i = 0;
+                order = order.trim();
+                order = order.split(' ');
+                console.log(order);
+                order.map((value) => {
+                    console.log(value);
+                    var tempValue = parseInt(value);
+                    console.log(tempValue);
+                    console.log(isNaN(tempValue));
+                    if (isNaN(tempValue)){
+                        try{
+                            playList[tempValue].repeat = true;
+                            return;
+                        }
+                        catch(err){
+                            return;
+                        }
+                    }else {
+                        try{
+                            console.log(value);
+                            var start = value.slice(0, value.indexOf('-'));
+                            var end = parseInt(value.slice(-value.indexOf('-')));
+                            console.log(start ," " , end);
+                            while (start <= end && start < playList.length){
+                                playList[start].repeat = true;
+                                start++;
+                            }
+                            return;
+                        }
+                        catch (err){
+                            msg.channel.send("Lỗi rồi :(");
+                            return;
+                        }
+                    }
+                })
+                playList.map((x ) => {
+                    console.log(x.title ," " , x.repeat);
+                    return;
+                })
+            } catch (error) {
+                msg.channel.send("Lỗi rồi thằng ngu :(");
+                return;
+            }
+        }
+    } else if (msg.content == '\\unrepeat' || key == '\\unrepeat') {
+        if (msg.content.indexOf(' ') == -1) {
+            var i;
+            for (i = 0; i < playList.length; i++) {
+                playList[i].repeat = false;
+            }
+        } else {
+            try {
+                var i = 0;
+                order = order.trim();
+                order = order.split(' ');
+                console.log(order);
+                order.map((value) => {
+                    console.log(value);
+                    var tempValue = parseInt(value);
+                    console.log(tempValue);
+                    console.log(isNaN(tempValue));
+                    if (isNaN(tempValue)) {
+                        try {
+                            playList[tempValue].repeat = false;
+                            return;
+                        } catch (err) {
+                            return;
+                        }
+                    } else {
+                        try {
+                            console.log(value);
+                            var start = value.slice(0, value.indexOf('-'));
+                            var end = parseInt(value.slice(-value.indexOf('-')));
+                            console.log(start, " ", end);
+                            while (start <= end && start < playList.length) {
+                                playList[start].repeat = false;
+                                start++;
+                            }
+                            return;
+                        } catch (err) {
+                            msg.channel.send("Lỗi rồi :(");
+                            return;
+                        }
+                    }
+                })
+                playList.map((x) => {
+                    console.log(x.title, " ", x.repeat);
+                    return;
+                })
+            } catch (error) {
+                msg.channel.send("Lỗi rồi thằng ngu :(");
+                return;
+            }
+        }
     }
     
 }
  
 module.exports.textToSpeech = async msg => {
-    if (msg.author.bot) return; 
+    if (msg.author.bot || !msg.guild || !msg.content.startsWith('\\')) return; 
     var i = msg.content.indexOf(' ');
     // console.log(msg.author.bot);
 
@@ -280,7 +389,7 @@ module.exports.textToSpeech = async msg => {
     try {
         var order = msg.content.substr(i);
     } catch (err) { 
-        var order = "a";
+        var order = "";
     }
 
     if (key != "\\tts" && msg.content != "\\tts") return;
@@ -306,7 +415,7 @@ module.exports.textToSpeech = async msg => {
         dis.setVolume(2);
 
 
-        dis.on( "finish" , () => {play(connection , msg , timeStream)});
+        dis.on( "finish" , () => {play(connection , msg , timeStream , indexPlay)});
     } catch(err) {
         var dis = await connection.play("output1.mp3");
         dis.setVolume(2);
@@ -318,11 +427,8 @@ module.exports.textToSpeech = async msg => {
             connection = undefined;
             dispatch = undefined;
             countDown = undefined;
-
             volume = 50;
-            while (playList.length) {
-            playList.pop();
-            }
+            playList.splice(0);
         }, 1000 * 60 * 60);
         
     }  
