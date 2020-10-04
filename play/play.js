@@ -341,7 +341,7 @@ module.exports.play = async msg => {
                     var tempValue = parseInt(value);
                     console.log(tempValue);
                     console.log(isNaN(tempValue));
-                    if (isNaN(tempValue)) {
+                    if (typeof(tempValue) == 'number') {
                         try {
                             playList[tempValue].repeat = false;
                             return;
