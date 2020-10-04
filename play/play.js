@@ -106,7 +106,7 @@ async function play(connection , msg , begin, index) {
             else {
                 if (playList[index].repeat == false) playList.splice(index , 1);
                 clearTimeout(countDown);
-                play(connection , msg , 0 , index = index == playList.length - 1 ? 0 : index + 1);
+                play(connection , msg , 0 , index = index >= playList.length - 1 ? 0 : index + 1);
             }
         })
 
