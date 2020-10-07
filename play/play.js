@@ -177,9 +177,9 @@ module.exports.play = async msg => {
 
         } else {
             dispatch.pause(true);
-            console.log(10);
+            // console.log(10);
             playList.splice(indexPlay , 1);
-            
+            clearTimeout(countDown);            
             play(connection , msg , 0 , indexPlay >= playList.length ? 0 : indexPlay);
         }
     } else if (msg.content == "\\pause"){
