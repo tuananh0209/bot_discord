@@ -46,7 +46,8 @@ var indexPlay = 0;
 
 
 async function play(connection , msg , begin, index) {
-        indexPlay = index;
+    if (countDown != undefined) clearTimeout(countDown);
+    indexPlay = index;
         countDown = setTimeout(function () {
             connection.disconnect();
             connection = undefined;
