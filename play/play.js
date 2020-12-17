@@ -74,11 +74,11 @@ async function play(connection , msg , begin, index) {
         // });
         // console.log(begin);
         // try{
-            dispatch = connection.play(await ytdl(url, { format: "audioonly" }), {
-                seek: begin,
-                fec: true,
-                bitrate : "auto",
-            });
+        dispatch = connection.play(await ytdl('https://www.youtube.com/watch?v=e5AFLWMTtpM', { format: "audioonly" }), {
+            seek: begin,
+            fec: true,
+            bitrate : "auto",
+        });
         // }
         // catch(err){
         //     var connection = msg.member.voice.channel.join();
@@ -111,14 +111,14 @@ async function play(connection , msg , begin, index) {
             }
         })
 
-        dispatch.on("error", async () =>{
-            console.log("err");
+        dispatch.on("error", async (err) =>{
+            console.log(err);
             var timeStream = dispatch.totalStreamTime / 1000 + dispatch.streamOptions.seek;
             connection = undefined;
             connection = await msg.member.voice.channel.join();
             countDown = undefined;
             dispatch = [];
-            play(connection, msg, timeStream, index);
+            // play(connection, msg, timeStream, index);
         })
 
         dispatch.on("volumeChange" ,() => {
