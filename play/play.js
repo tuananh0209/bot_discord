@@ -65,33 +65,14 @@ async function play(connection , msg , begin, index) {
             msg.reply("Opp!!");
             return;
         }    
-        console.log(playList);
+        // console.log(playList);
 
-        // dispatch = connection.play(await ytdl(url) ,{
-        //     filter: format => format.quanlity == "360p",
-        //     begin: "10000ms",
-        //     type: 'opus'
-        // });
-        // console.log(begin);
-        // try{
         dispatch = connection.play(await ytdl('https://www.youtube.com/watch?v=e5AFLWMTtpM', { format: "audioonly" }), {
             seek: begin,
             fec: true,
             bitrate : "auto",
         });
-        // }
-        // catch(err){
-        //     var connection = msg.member.voice.channel.join();
-        //     dispatch = connection.play(await ytdl(url, {
-        //         format: "audioonly"
-        //     }), {
-        //         seek: begin,
-        //         fec: true,
-        //         bitrate: "auto",
-        //     });
-        // }
-        // console.log(dispatch.streamOptions);
-        // console.log(playList);
+       
         dispatch.setVolume(volume /100);
         
 
@@ -118,7 +99,7 @@ async function play(connection , msg , begin, index) {
             connection = await msg.member.voice.channel.join();
             countDown = undefined;
             dispatch = [];
-            // play(connection, msg, timeStream, index);
+            play(connection, msg, timeStream, index);
         })
 
         dispatch.on("volumeChange" ,() => {
@@ -145,10 +126,11 @@ module.exports.play = async msg => {
     }
 
     var urlCheck = order.indexOf("http");
-    // console.log(msg.embeds[0].video);
+   
     if (key == "\\q"){
-        if (msg.member.voice.channel) connection = await msg.member.voice.channel.join();
-        
+ 
+        if ( connection == undefined ? msg.member.voice.channel : connection.channel.id != msg.member.voice.channel.id ) connection = await msg.member.voice.channel.join();
+       
         var keyWord = urlCheck == -1 ? order : msg.embeds[0].title;
         var a = await yts(keyWord);
         var data = a.videos[0]; 
@@ -164,7 +146,7 @@ module.exports.play = async msg => {
             play(connection , msg , 0 , 0);
             msg.channel.send("play!");
         }
-        console.log(data);
+
 
     } else if (msg.content == "\\next"){
         console.log(122);
