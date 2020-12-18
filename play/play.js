@@ -388,7 +388,7 @@ module.exports.textToSpeech = async msg => {
  
     // var broadCast = bot.voice.createBroadcast();
     
-    if (!connection) connection = await msg.member.voice.channel.join();
+    if ( connection == undefined ? msg.member.voice.channel : connection.channel.id != msg.member.voice.channel.id ) connection = await msg.member.voice.channel.join();
 
     try {
         var timeStream = dispatch.totalStreamTime / 1000 + dispatch.streamOptions.seek;
