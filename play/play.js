@@ -67,7 +67,7 @@ async function play(connection , msg , begin, index) {
         }    
         // console.log(playList);
 
-        dispatch = connection.play(await ytdl('https://www.youtube.com/watch?v=e5AFLWMTtpM', { format: "audioonly" }), {
+        dispatch = connection.play(await ytdl(url, { format: "audioonly" }), {
             seek: begin,
             fec: true,
             bitrate : "auto",
