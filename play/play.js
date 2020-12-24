@@ -63,6 +63,7 @@ async function play(connection , msg , begin, index) {
             // console.log(url);    
         } catch (error) {
             msg.reply("Opp!!");
+            indexPlay = 0
             return;
         }    
         // console.log(playList);
