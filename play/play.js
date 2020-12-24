@@ -47,6 +47,7 @@ var indexPlay = 0;
 
 async function play(connection , msg , begin, index) {
     if (countDown != undefined) clearTimeout(countDown);
+    
     indexPlay = index;
         countDown = setTimeout(function () {
             connection.disconnect();
@@ -62,7 +63,6 @@ async function play(connection , msg , begin, index) {
             url = playList[index].url;
             // console.log(url);    
         } catch (error) {
-            msg.reply("Opp!!");
             indexPlay = 0
             return;
         }    
