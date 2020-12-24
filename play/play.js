@@ -399,7 +399,7 @@ module.exports.textToSpeech = async msg => {
         dis.setVolume(2);
 
 
-        dis.on( "finish" , () => {play(connection , msg , timeStream , indexPlay)});
+        dis.on( "finish" , () => {play(connection , msg , timeStream , indexPlay >= playList.length ? 0 : indexPlay)});
     } catch(err) {
         var dis = await connection.play("output1.mp3");
         dis.setVolume(2);
