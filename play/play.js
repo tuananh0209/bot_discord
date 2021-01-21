@@ -70,7 +70,6 @@ async function play(connection , msg , begin, index) {
             // console.log(url);    
         } catch (error) {
             indexPlay = 0
-            
             return;
         }    
         // console.log(playList);
@@ -102,7 +101,13 @@ async function play(connection , msg , begin, index) {
 
         dispatch.on("error", async (err) =>{
             console.log(err);
-            var timeStream = dispatch.totalStreamTime / 1000 + dispatch.streamOptions.seek;
+            var timeStream
+            try {
+                timeStream = dispatch.totalStreamTime / 1000 + dispatch.streamOptions.seek;
+                
+            }catch(err){
+                timeStream = 0
+            }
             connection = undefined;
             connection = await msg.member.voice.channel.join();
             countDown = undefined;
