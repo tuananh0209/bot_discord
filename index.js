@@ -1,8 +1,5 @@
 require("dotenv").config();
-
 const discord = require('discord.js');
-const ytdl = require("ytdl-core-discord");
-
 const play = require('./play/play');
 
 var bot = new discord.Client();

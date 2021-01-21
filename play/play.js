@@ -7,6 +7,7 @@ var util = require("util");
 const discord = require("discord.js");
 const { DH_NOT_SUITABLE_GENERATOR } = require("constants");
 const { repeat, indexOf } = require("ffmpeg-static");
+const { time } = require("console");
 
 const keyFile = 'textToSpeech/authClientAPIGoogle.json';
 const projectId = process.env.PROJECTID;
@@ -43,11 +44,13 @@ var connection;
 var volume = 50;
 var countDown;
 var indexPlay = 0;
-
-
+var voiceList = [];
+var voiceFlag = false;
+var onVoice = false;
 async function play(connection , msg , begin, index) {
     if (countDown != undefined) clearTimeout(countDown);
-    
+    voiceFlag = false;
+    if (onVoice == true) return
     indexPlay = index;
         countDown = setTimeout(function () {
             connection.disconnect();
@@ -56,6 +59,9 @@ async function play(connection , msg , begin, index) {
             countDown = undefined;
             volume = 50;
             playList.splice(0);
+            voiceList = [];
+            voiceFlag = false;
+            onVoice = false;
         }, 1000 * 60 * 60);
 
         var url;
@@ -64,10 +70,11 @@ async function play(connection , msg , begin, index) {
             // console.log(url);    
         } catch (error) {
             indexPlay = 0
+            
             return;
         }    
         // console.log(playList);
-
+ 
         dispatch = connection.play(await ytdl(url, { format: "audioonly" }), {
             seek: begin,
             fec: true,
@@ -109,6 +116,66 @@ async function play(connection , msg , begin, index) {
         })
 };
 
+async function streamVoice (msg , timeStream){
+
+    try{
+        setting.input.text = voiceList.shift()
+    }catch(err){
+        console.log(err)
+        return
+    }
+    onVoice = true;
+    voiceFlag = true;
+    const [res] = await client.synthesizeSpeech(setting);
+ 
+    const writeFile = util.promisify(fs.writeFile);
+
+    await writeFile(setting.outputFileName, res.audioContent, "binary");
+ 
+    // var broadCast = bot.voice.createBroadcast();
+    
+    if ( connection == undefined ? msg.member.voice.channel : connection.channel.id != msg.member.voice.channel.id ) connection = await msg.member.voice.channel.join();
+    try {
+        // let connection = await msg.member.voice.channel.join();
+        // dispatch.pause(true);
+        var dis =  await connection.play("output1.mp3");
+        dis.setVolume(2);
+
+
+        dis.on( "finish" , () => {
+            
+            if ( voiceList.length > 0) 
+            
+                streamVoice(msg , timeStream) 
+            else
+            { 
+                onVoice = false
+                play(connection , msg , timeStream , indexPlay >= playList.length ? 0 : indexPlay)
+            }
+        });
+    } catch(err) {
+        var dis = await connection.play("output1.mp3");
+        dis.setVolume(2);
+
+        clearTimeout(countDown);
+        
+        countDown = setTimeout(function (con) {
+            con.disconnect();
+            connection = undefined;
+            dispatch = undefined;
+            countDown = undefined;
+            voiceList = [];
+            voiceFlag = false;
+            onVoice = false;
+            volume = 50;
+            playList.splice(0);
+        }, 1000 * 60 * 60);
+        if (voiceList.length > 0) streamVoice(msg , timeStream)
+        else
+            onVoice = false
+    }  
+
+}
 
 module.exports.play = async msg => {
     
@@ -134,8 +201,9 @@ module.exports.play = async msg => {
        
         var keyWord = urlCheck == -1 ? order : msg.embeds[0].title;
         var a = await yts(keyWord);
-        var data = a.videos[0]; 
-        // console.log(data);
+        var data = a.videos[0];
+        console.log(data);
+        // return;
         if (playList[0]){
             data.repeat = false;
             playList.push(data);
@@ -158,6 +226,7 @@ module.exports.play = async msg => {
             playList.splice(indexPlay , 1);
             dispatch.pause(false);
             dispatch = [];
+           
 
         } else {
             dispatch.pause(true);
@@ -199,6 +268,7 @@ module.exports.play = async msg => {
         try{
             dispatch.pause();
             dispatch = [];
+            
             while(playList.length){
                 playList.pop();
             }
@@ -243,6 +313,9 @@ module.exports.play = async msg => {
             msg.reply('Bye!!!');
             connection.disconnect();
             countDown = undefined;
+            voiceList = [];
+            voiceFlag = false;
+            onVoice = false;
             
             connection = undefined;
             dispatch = undefined;
@@ -377,43 +450,21 @@ module.exports.textToSpeech = async msg => {
     }
 
     if (key != "\\tts" && msg.content != "\\tts") return;
-    setting.input.text = order != "s" ? order : "Nhập cái gì đó đi thằng lồn!"; 
-    // console.log(order);
+
+    voiceList.push(order != "s" ? order : "Nhập cái gì đó đi thằng lồn!"); 
+
+    
     
 
-    const [res] = await client.synthesizeSpeech(setting);
- 
-    const writeFile = util.promisify(fs.writeFile);
-
-    await writeFile(setting.outputFileName, res.audioContent, "binary");
- 
-    // var broadCast = bot.voice.createBroadcast();
+        var timeStream
+        try{
+            
+            timeStream = dispatch.totalStreamTime / 1000 + dispatch.streamOptions.seek;
+        
+        }catch (err){
+            timeStream = 0
+        }
+        if (voiceFlag == false)
+        streamVoice(msg , timeStream)
     
-    if ( connection == undefined ? msg.member.voice.channel : connection.channel.id != msg.member.voice.channel.id ) connection = await msg.member.voice.channel.join();
-
-    try {
-        var timeStream = dispatch.totalStreamTime / 1000 + dispatch.streamOptions.seek;
-        // let connection = await msg.member.voice.channel.join();
-        // dispatch.pause(true);
-        var dis =  await connection.play("output1.mp3");
-        dis.setVolume(2);
-
-
-        dis.on( "finish" , () => {play(connection , msg , timeStream , indexPlay >= playList.length ? 0 : indexPlay)});
-    } catch(err) {
-        var dis = await connection.play("output1.mp3");
-        dis.setVolume(2);
-
-        clearTimeout(countDown);
-        
-        countDown = setTimeout(function (con) {
-            con.disconnect();
-            connection = undefined;
-            dispatch = undefined;
-            countDown = undefined;
-            volume = 50;
-            playList.splice(0);
-        }, 1000 * 60 * 60);
-        
-    }  
 }
